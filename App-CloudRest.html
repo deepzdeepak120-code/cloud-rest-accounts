@@ -1,0 +1,1043 @@
+<!doctype html>
+<html lang="en-IN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex">
+<style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
+<title>Cloud Rest Accounts</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=Figtree:wght@400;500;600;700&display=swap">
+<style>
+/* Layout: one calm column — summary first (four balance cards, closing balance dominant), then day strip, then the entries list. Mobile keeps Add Income / Add Expense in a fixed bottom bar. */
+:root {
+  --bg: #F1F5F3;
+  --surface: #FFFFFF;
+  --surface-2: #E7EEEB;
+  --ink: #12211D;
+  --muted: #586A64;
+  --line: #D4DED9;
+  --pine: #1D5A4E;
+  --pine-soft: #DCEBE6;
+  --on-pine: #F3FBF8;
+  --brass: #A87727;
+  --brass-soft: #F6ECD9;
+  --in: #17724A;
+  --in-bg: #E1F2E9;
+  --out: #A93F2C;
+  --out-bg: #F8E5E0;
+  --shadow: 0 1px 2px rgba(18,33,29,.06), 0 4px 16px rgba(18,33,29,.05);
+  --font-display: "Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+  --font-body: "Figtree", "Segoe UI", system-ui, -apple-system, sans-serif;
+  --radius: 14px;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0E1614; --surface: #15201D; --surface-2: #1C2925; --ink: #E4EEEA; --muted: #97AAA3; --line: #293A35;
+    --pine: #3E9C86; --pine-soft: #1B3630; --on-pine: #F3FBF8; --brass: #D9AA5A; --brass-soft: #3A2E18;
+    --in: #5CC795; --in-bg: #16352A; --out: #EE8B76; --out-bg: #3B221C;
+    --shadow: 0 1px 2px rgba(0,0,0,.3); color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0E1614; --surface: #15201D; --surface-2: #1C2925; --ink: #E4EEEA; --muted: #97AAA3; --line: #293A35;
+  --pine: #3E9C86; --pine-soft: #1B3630; --on-pine: #F3FBF8; --brass: #D9AA5A; --brass-soft: #3A2E18;
+  --in: #5CC795; --in-bg: #16352A; --out: #EE8B76; --out-bg: #3B221C;
+  --shadow: 0 1px 2px rgba(0,0,0,.3); color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html, body { min-height: 100%; }
+body { background: var(--bg); color: var(--ink); font-family: var(--font-body); font-size: 15px; line-height: 1.5; -webkit-font-smoothing: antialiased; }
+button, input, select, textarea { font: inherit; color: inherit; }
+.num { font-variant-numeric: tabular-nums; }
+h1, h2, h3 { font-family: var(--font-display); margin: 0; text-wrap: balance; letter-spacing: -0.01em; }
+:focus-visible { outline: 3px solid var(--brass); outline-offset: 2px; }
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.wrap { max-width: 1180px; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+
+/* Buttons */
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 44px; padding: 0 16px; border-radius: 10px; border: 1px solid var(--line); background: var(--surface); font-weight: 600; cursor: pointer; white-space: nowrap; }
+.btn:hover { background: var(--surface-2); }
+.btn:disabled { opacity: .45; cursor: not-allowed; }
+.btn svg { width: 18px; height: 18px; flex: none; }
+.btn-primary { background: var(--pine); border-color: var(--pine); color: var(--on-pine); }
+.btn-primary:hover { background: var(--pine); filter: brightness(1.08); }
+.btn-income { background: var(--in); border-color: var(--in); color: #fff; }
+.btn-expense { background: var(--out); border-color: var(--out); color: #fff; }
+.btn-income:hover, .btn-expense:hover { filter: brightness(1.08); background: inherit; }
+.btn-income:hover { background: var(--in); } .btn-expense:hover { background: var(--out); }
+.btn-ghost { background: transparent; border-color: transparent; }
+.btn-danger { background: var(--out); border-color: var(--out); color: #fff; }
+.btn-danger:hover { background: var(--out); filter: brightness(1.08); }
+.icon-btn { width: 44px; height: 44px; padding: 0; display: inline-flex; align-items: center; justify-content: center; border-radius: 10px; border: 1px solid transparent; background: transparent; cursor: pointer; color: var(--muted); }
+.icon-btn:hover { background: var(--surface-2); color: var(--ink); }
+.icon-btn svg { width: 19px; height: 19px; }
+.link-btn { background: none; border: 0; padding: 0; color: var(--pine); font-weight: 600; cursor: pointer; text-decoration: underline; text-underline-offset: 3px; }
+
+/* Header */
+.topbar { background: var(--surface); border-bottom: 1px solid var(--line); position: sticky; top: env(safe-area-inset-top, 0px); z-index: 20; }
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--surface); }
+.topbar-in { display: flex; align-items: center; gap: 12px; min-height: 64px; }
+.brand { display: flex; align-items: center; gap: 10px; font-family: var(--font-display); font-weight: 700; font-size: 18px; }
+.brand-mark { width: 34px; height: 34px; border-radius: 9px; background: var(--pine); color: var(--on-pine); display: grid; place-items: center; flex: none; }
+.brand-mark svg { width: 20px; height: 20px; }
+.topbar .spacer { flex: 1; }
+.demo-pill { font-size: 12px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; padding: 4px 10px; border-radius: 999px; background: var(--brass-soft); color: var(--brass); }
+.demo-banner { background: var(--brass-soft); color: var(--ink); font-size: 14px; }
+.demo-banner .wrap { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; padding-block: 8px; }
+.demo-banner strong { color: var(--brass); }
+
+/* Login */
+.login-page { min-height: 100vh; display: grid; place-items: center; padding-block: 32px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+.login-card { width: 100%; max-width: 420px; background: var(--surface); border: 1px solid var(--line); border-radius: 18px; box-shadow: var(--shadow); padding: 32px 28px; display: grid; gap: 22px; }
+.login-head { display: grid; gap: 6px; }
+.login-head .brand-mark { width: 48px; height: 48px; border-radius: 12px; margin-bottom: 8px; }
+.login-head .brand-mark svg { width: 28px; height: 28px; }
+.login-head h1 { font-size: 28px; }
+.login-head p { margin: 0; color: var(--muted); }
+.demo-note { background: var(--brass-soft); border-radius: 10px; padding: 12px 14px; font-size: 14px; display: grid; gap: 4px; }
+.demo-note b { color: var(--brass); }
+
+/* Forms */
+.field { display: grid; gap: 6px; }
+.field label, .field .label { font-weight: 600; font-size: 14px; }
+.field .hint { font-size: 13px; color: var(--muted); font-weight: 400; }
+.input, .select, .textarea { width: 100%; min-height: 46px; padding: 10px 12px; border-radius: 10px; border: 1px solid var(--line); background: var(--surface); font-size: 16px; }
+.textarea { min-height: 72px; resize: vertical; }
+.input:focus, .select:focus, .textarea:focus { outline: none; border-color: var(--pine); box-shadow: 0 0 0 3px var(--pine-soft); }
+.field.has-error .input, .field.has-error .select, .field.has-error .textarea, .field.has-error .amount-box { border-color: var(--out); }
+.err { color: var(--out); font-size: 13px; font-weight: 600; display: flex; gap: 6px; align-items: center; }
+.pw-box { position: relative; }
+.pw-box .input { padding-right: 52px; }
+.pw-box .icon-btn { position: absolute; right: 2px; top: 1px; }
+.amount-box { display: flex; align-items: center; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); overflow: hidden; }
+.amount-box:focus-within { border-color: var(--pine); box-shadow: 0 0 0 3px var(--pine-soft); }
+.amount-box span { padding: 0 4px 0 14px; font-weight: 700; font-size: 18px; color: var(--muted); }
+.amount-box input { border: 0; min-height: 46px; flex: 1; min-width: 0; padding: 10px 12px 10px 4px; font-size: 18px; font-weight: 600; background: transparent; outline: none; }
+.room-picker { display: flex; flex-wrap: wrap; gap: 8px; }
+.room-picker button { min-width: 54px; min-height: 44px; border-radius: 10px; border: 1px solid var(--line); background: var(--surface); font-weight: 700; cursor: pointer; }
+.room-picker button[aria-pressed="true"] { background: var(--pine); color: var(--on-pine); border-color: var(--pine); }
+
+/* Properties */
+.page-head { padding-block: 28px 8px; display: grid; gap: 4px; }
+.page-head h1 { font-size: clamp(24px, 4vw, 32px); }
+.page-head p { margin: 0; color: var(--muted); }
+.prop-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px; padding-block: 16px 40px; }
+.prop-card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow); padding: 20px; display: grid; gap: 14px; align-content: start; }
+.prop-card.featured { border-color: var(--pine); }
+.prop-top { display: flex; gap: 14px; align-items: center; }
+.prop-icon { width: 52px; height: 52px; border-radius: 12px; background: var(--pine-soft); color: var(--pine); display: grid; place-items: center; flex: none; }
+.prop-icon svg { width: 28px; height: 28px; }
+.prop-card h2 { font-size: 20px; }
+.prop-card p { margin: 0; color: var(--muted); font-size: 14px; }
+.prop-stat { display: flex; justify-content: space-between; align-items: baseline; border-top: 1px solid var(--line); padding-top: 12px; font-size: 14px; color: var(--muted); }
+.prop-stat b { font-size: 18px; color: var(--ink); }
+.tag { font-size: 12px; font-weight: 600; padding: 2px 8px; border-radius: 999px; background: var(--surface-2); color: var(--muted); }
+
+/* Accounts */
+.acc-head { padding-block: 20px 4px; display: flex; gap: 16px; align-items: flex-end; justify-content: space-between; flex-wrap: wrap; }
+.acc-title { display: grid; gap: 2px; min-width: 0; }
+.crumb { font-size: 14px; color: var(--muted); }
+.acc-title h1 { font-size: clamp(24px, 4vw, 32px); }
+.desk-actions { display: flex; gap: 10px; }
+.datebar { margin-top: 16px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 14px 16px; display: flex; gap: 12px; align-items: center; justify-content: space-between; flex-wrap: wrap; }
+.date-now { display: grid; gap: 2px; min-width: 0; }
+.date-now .label { font-size: 12px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); font-weight: 700; }
+.date-now .big { font-family: var(--font-display); font-size: 22px; font-weight: 700; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.badge-today { font-family: var(--font-body); font-size: 12px; font-weight: 700; padding: 3px 9px; border-radius: 999px; background: var(--pine); color: var(--on-pine); }
+.badge-past { font-family: var(--font-body); font-size: 12px; font-weight: 700; padding: 3px 9px; border-radius: 999px; background: var(--brass-soft); color: var(--brass); }
+.date-ctrls { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.date-ctrls .input { width: auto; min-width: 0; }
+
+.summary { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; margin-top: 14px; }
+.sum-card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 16px; display: grid; gap: 6px; min-width: 0; }
+.sum-label { display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 600; color: var(--muted); }
+.sum-label svg { width: 18px; height: 18px; }
+.sum-value { font-family: var(--font-display); font-size: clamp(20px, 2.6vw, 28px); font-weight: 700; overflow-wrap: anywhere; }
+.sum-sub { font-size: 13px; color: var(--muted); }
+.sum-card.income .sum-label { color: var(--in); } .sum-card.income .sum-value { color: var(--in); }
+.sum-card.expense .sum-label { color: var(--out); } .sum-card.expense .sum-value { color: var(--out); }
+.sum-card.closing { background: var(--pine); border-color: var(--pine); color: var(--on-pine); box-shadow: var(--shadow); }
+.sum-card.closing .sum-label, .sum-card.closing .sum-sub { color: var(--on-pine); opacity: .9; }
+.sum-card.closing .sum-value { font-size: clamp(24px, 3.2vw, 34px); }
+.formula { margin-top: 8px; font-size: 13px; color: var(--muted); }
+
+.days { margin-top: 18px; }
+.days h2 { font-size: 16px; margin-bottom: 8px; font-family: var(--font-body); font-weight: 700; }
+.day-strip { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 8px; }
+.day-chip { border: 1px solid var(--line); background: var(--surface); border-radius: 12px; padding: 10px 8px; cursor: pointer; text-align: left; display: grid; gap: 2px; min-width: 0; min-height: 44px; }
+.day-chip:hover { border-color: var(--pine); }
+.day-chip[aria-current="date"] { background: var(--pine-soft); border-color: var(--pine); box-shadow: inset 0 0 0 1px var(--pine); }
+.day-chip .d1 { font-size: 12px; color: var(--muted); font-weight: 600; }
+.day-chip .d2 { font-weight: 700; }
+.day-chip .d3 { font-size: 12px; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+.panel { margin-top: 18px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; }
+.panel-head { padding: 14px 16px; display: grid; gap: 12px; border-bottom: 1px solid var(--line); }
+.panel-title { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; flex-wrap: wrap; }
+.panel-title h2 { font-size: 18px; }
+.panel-title span { font-size: 14px; color: var(--muted); }
+.filters { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; gap: 10px; align-items: center; }
+.search { position: relative; min-width: 0; }
+.search svg { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); width: 18px; height: 18px; color: var(--muted); }
+.search .input { padding-left: 40px; }
+.seg { display: inline-flex; background: var(--surface-2); border-radius: 10px; padding: 3px; }
+.seg button { min-height: 40px; padding: 0 14px; border: 0; border-radius: 8px; background: transparent; font-weight: 600; cursor: pointer; color: var(--muted); }
+.seg button[aria-pressed="true"] { background: var(--surface); color: var(--ink); box-shadow: var(--shadow); }
+.filter-note { font-size: 13px; color: var(--muted); display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+
+.table-wrap { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; }
+th { text-align: left; font-size: 12px; text-transform: uppercase; letter-spacing: .07em; color: var(--muted); padding: 10px 14px; background: var(--surface-2); white-space: nowrap; }
+td { padding: 12px 14px; border-top: 1px solid var(--line); vertical-align: middle; }
+th.amt, td.amt { text-align: right; white-space: nowrap; }
+tbody tr:hover { background: color-mix(in srgb, var(--surface-2) 55%, transparent); }
+.t-time { font-weight: 700; }
+.t-ref { font-size: 12px; color: var(--muted); }
+.t-desc { font-weight: 600; }
+.t-notes { font-size: 13px; color: var(--muted); }
+.room { display: inline-block; min-width: 38px; text-align: center; padding: 3px 8px; border-radius: 7px; border: 1px solid var(--line); font-weight: 700; font-size: 13px; background: var(--surface); }
+.no-room { color: var(--muted); font-size: 13px; }
+.amt-in { color: var(--in); font-weight: 700; }
+.amt-out { color: var(--out); font-weight: 700; }
+.amt-empty { color: var(--line); }
+.row-actions { display: flex; gap: 2px; justify-content: flex-end; }
+tfoot td { background: var(--surface-2); font-weight: 700; }
+.type-pill { display: inline-flex; align-items: center; gap: 4px; font-size: 12px; font-weight: 700; padding: 2px 8px; border-radius: 999px; }
+.type-pill svg { width: 13px; height: 13px; }
+.type-pill.in { background: var(--in-bg); color: var(--in); }
+.type-pill.out { background: var(--out-bg); color: var(--out); }
+
+.cards { display: none; }
+.t-card { padding: 14px 16px; border-top: 1px solid var(--line); display: grid; gap: 8px; }
+.t-card:first-child { border-top: 0; }
+.t-card-top { display: flex; justify-content: space-between; gap: 12px; align-items: flex-start; }
+.t-card-amt { font-size: 18px; white-space: nowrap; }
+.t-card-meta { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; font-size: 13px; color: var(--muted); }
+.t-card-actions { display: flex; gap: 8px; }
+.t-card-actions .btn { min-height: 40px; padding: 0 12px; font-size: 14px; }
+.cards-total { display: flex; justify-content: space-between; padding: 12px 16px; background: var(--surface-2); font-weight: 700; gap: 12px; flex-wrap: wrap; }
+
+.empty { padding: 40px 20px; text-align: center; display: grid; gap: 8px; justify-items: center; }
+.empty .e-icon { width: 52px; height: 52px; border-radius: 50%; background: var(--surface-2); display: grid; place-items: center; color: var(--muted); }
+.empty .e-icon svg { width: 26px; height: 26px; }
+.empty h3 { font-size: 18px; }
+.empty p { margin: 0; color: var(--muted); max-width: 40ch; }
+
+.mobile-bar { display: none; }
+.foot-note { padding-block: 24px 40px; font-size: 13px; color: var(--muted); }
+
+/* Modal */
+.overlay { position: fixed; inset: 0; background: rgba(10,20,17,.5); z-index: 50; display: grid; place-items: center; padding: 16px; }
+.modal { width: 100%; max-width: 520px; max-height: calc(100vh - 32px); overflow-y: auto; background: var(--surface); border-radius: 18px; box-shadow: 0 20px 60px rgba(0,0,0,.25); }
+.modal-head { display: flex; align-items: center; gap: 12px; padding: 18px 20px; border-bottom: 1px solid var(--line); position: sticky; top: 0; background: var(--surface); z-index: 1; }
+.modal-head h2 { font-size: 20px; flex: 1; }
+.modal-head .m-icon { width: 38px; height: 38px; border-radius: 10px; display: grid; place-items: center; flex: none; }
+.modal-head .m-icon svg { width: 20px; height: 20px; }
+.m-icon.in { background: var(--in-bg); color: var(--in); } .m-icon.out { background: var(--out-bg); color: var(--out); }
+.modal-body { padding: 18px 20px; display: grid; gap: 16px; }
+.modal-foot { padding: 14px 20px calc(14px + env(safe-area-inset-bottom, 0px)); border-top: 1px solid var(--line); display: flex; gap: 10px; justify-content: flex-end; position: sticky; bottom: 0; background: var(--surface); }
+.two { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.confirm-box { background: var(--surface-2); border-radius: 10px; padding: 12px 14px; display: grid; gap: 2px; }
+
+/* Toast */
+.toast-zone { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(24px + env(safe-area-inset-bottom, 0px)); z-index: 60; width: min(440px, calc(100% - 32px)); }
+.toast { background: var(--ink); color: var(--bg); padding: 12px 16px; border-radius: 12px; box-shadow: 0 8px 30px rgba(0,0,0,.2); display: flex; gap: 10px; align-items: center; font-weight: 600; }
+.toast svg { width: 20px; height: 20px; flex: none; }
+
+@media (max-width: 900px) {
+  .summary { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .filters { grid-template-columns: 1fr 1fr; }
+  .filters .search { grid-column: 1 / -1; }
+}
+@media (max-width: 720px) {
+  .table-wrap { display: none; }
+  .cards { display: block; }
+  .desk-actions { display: none; }
+  .mobile-bar { display: flex; gap: 10px; position: fixed; left: 0; right: 0; bottom: 0; z-index: 30; background: var(--surface); border-top: 1px solid var(--line); padding-top: 10px; padding-bottom: calc(10px + env(safe-area-inset-bottom, 0px)); padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); box-shadow: 0 -4px 16px rgba(0,0,0,.06); }
+  .mobile-bar .btn { flex: 1; min-height: 52px; font-size: 16px; }
+  .app-accounts { padding-bottom: 84px; }
+  .toast-zone { bottom: calc(96px + env(safe-area-inset-bottom, 0px)); }
+  .sum-card.closing { grid-column: 1 / -1; order: -1; }
+  .day-strip { grid-template-columns: repeat(7, minmax(84px, 1fr)); overflow-x: auto; padding-bottom: 4px; }
+  .datebar { padding: 12px; }
+  .date-now .big { font-size: 19px; }
+  .date-ctrls { width: 100%; }
+  .date-ctrls .input { flex: 1; }
+  .overlay { place-items: end center; padding: 0; }
+  .modal { max-width: none; border-radius: 18px 18px 0 0; max-height: 92vh; }
+  .two { grid-template-columns: 1fr; }
+  .hide-sm { display: none; }
+  .modal-foot .btn { flex: 1; }
+}
+@media (max-width: 420px) {
+  .seg button { padding: 0 10px; }
+  .filters { grid-template-columns: 1fr; }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .toast { animation: rise .2s ease-out; }
+  @keyframes rise { from { transform: translateY(8px); opacity: 0; } to { transform: none; opacity: 1; } }
+}
+</style>
+</head>
+<body>
+
+
+<div id="root"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.3.1/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.3.1/umd/react-dom.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.5/babel.min.js"></script>
+
+<!--
+  ACCOUNTS LOGIC (plain JavaScript, no React).
+  In a real project this becomes src/lib/accounts.js. The Spring Boot API would
+  return the same shapes: Property, Account { startingBalance, startDate, transactions[] },
+  Transaction { id, ref, date, time, type, description, room, category, amount, notes }.
+-->
+<script id="accounts-logic">
+(function (global) {
+  const INCOME_CATEGORIES = ["Room Rent", "Advance Booking", "Food & Drinks", "Extra Bed", "Other Income"];
+  const EXPENSE_CATEGORIES = ["Groceries", "Electricity & Water", "Staff Salary", "Housekeeping", "Repairs & Maintenance", "Laundry", "Gas & Fuel", "Other Expense"];
+
+  const PROPERTIES = [
+    { id: "cloud-rest-villa", code: "CRV", name: "Cloud Rest Villa", description: "Hillside villa with six rooms: U1, U2, B1, B2, L1 and L2.", rooms: ["U1", "U2", "B1", "B2", "L1", "L2"], featured: true },
+    { id: "property-2", code: "P2", name: "Property 2", description: "Placeholder cottage. The real name will be added later.", rooms: ["R1", "R2", "R3"] },
+    { id: "property-3", code: "P3", name: "Property 3", description: "Placeholder villa. No entries yet.", rooms: ["R1", "R2"] }
+  ];
+
+  const pad = (n) => String(n).padStart(2, "0");
+  const toKey = (d) => d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate());
+  const fromKey = (k) => { const [y, m, d] = k.split("-").map(Number); return new Date(y, m - 1, d); };
+  const addDays = (k, n) => { const d = fromKey(k); d.setDate(d.getDate() + n); return toKey(d); };
+  const todayKey = () => toKey(new Date());
+  const nowTime = () => { const d = new Date(); return pad(d.getHours()) + ":" + pad(d.getMinutes()); };
+  const round2 = (n) => Math.round(n * 100) / 100;
+
+  const inr0 = new Intl.NumberFormat("en-IN", { maximumFractionDigits: 0 });
+  const inr2 = new Intl.NumberFormat("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  function formatINR(n) { const v = round2(n), a = Math.abs(v); return (v < 0 ? "−" : "") + "₹" + (Number.isInteger(a) ? inr0 : inr2).format(a); }
+  function formatLongDate(k) { return fromKey(k).toLocaleDateString("en-IN", { weekday: "long", day: "numeric", month: "long", year: "numeric" }); }
+  function formatShortDate(k) { return fromKey(k).toLocaleDateString("en-IN", { day: "numeric", month: "short" }); }
+  function weekday(k) { return fromKey(k).toLocaleDateString("en-IN", { weekday: "short" }); }
+
+  // Opening balance for any day = starting balance + every entry before that day.
+  // So yesterday's closing always equals today's opening, and editing an old
+  // entry automatically flows through to every later day.
+  function daySummary(account, dateKey) {
+    let opening = account.startingBalance, income = 0, expense = 0, count = 0;
+    for (const t of account.transactions) {
+      if (t.date < dateKey) opening += t.type === "income" ? t.amount : -t.amount;
+      else if (t.date === dateKey) { count++; if (t.type === "income") income += t.amount; else expense += t.amount; }
+    }
+    opening = round2(opening); income = round2(income); expense = round2(expense);
+    return { date: dateKey, opening, income, expense, closing: round2(opening + income - expense), count };
+  }
+
+  function transactionsForDay(account, dateKey) {
+    return account.transactions.filter((t) => t.date === dateKey)
+      .sort((a, b) => (a.time || "99:99").localeCompare(b.time || "99:99") || a.ref.localeCompare(b.ref));
+  }
+
+  function parseAmount(raw) {
+    const s = String(raw ?? "").replace(/[,₹\s]/g, "");
+    if (!/^\d+(\.\d{1,2})?$/.test(s)) return NaN;
+    return Number(s);
+  }
+
+  function validateTransaction(f, type, today) {
+    const e = {};
+    if (!f.date) e.date = "Choose a date.";
+    else if (f.date > today) e.date = "The date cannot be in the future.";
+    if (!f.description || !f.description.trim()) e.description = "Write a short description, for example “Room rent – 2 nights”.";
+    else if (f.description.trim().length > 80) e.description = "Keep the description under 80 characters.";
+    if (type === "income" && !f.room) e.room = "Choose the room this money is for.";
+    if (!f.category) e.category = type === "income" ? "Choose what the income is for." : "Choose what the money was spent on.";
+    const amt = parseAmount(f.amount);
+    if (String(f.amount ?? "").trim() === "") e.amount = "Enter the amount in rupees.";
+    else if (isNaN(amt)) e.amount = "Enter numbers only, with up to 2 decimal places (for example 2500 or 2500.50).";
+    else if (amt <= 0) e.amount = "The amount must be more than ₹0.";
+    else if (amt > 10000000) e.amount = "That amount looks too large. Please check it.";
+    if (f.notes && f.notes.length > 200) e.notes = "Keep notes under 200 characters.";
+    return e;
+  }
+
+  function makeRef(code, date, seq) { return code + "-" + date.slice(5).replace("-", "") + "-" + pad(seq); }
+
+  function buildSampleData(today) {
+    const plan = {
+      "cloud-rest-villa": {
+        startingBalance: 25000,
+        rows: [
+          [-6, "income", "09:15", "Room rent – 2 nights", "U1", "Room Rent", 5600],
+          [-6, "income", "11:40", "Room rent – 1 night", "B1", "Room Rent", 3200],
+          [-6, "expense", "10:05", "Vegetables and milk", "", "Groceries", 1850],
+          [-6, "expense", "16:30", "Cleaning supplies", "", "Housekeeping", 920],
+          [-5, "income", "10:20", "Breakfast and dinner – 4 guests", "L1", "Food & Drinks", 2400],
+          [-5, "income", "12:00", "Room rent – 3 nights", "L2", "Room Rent", 9600],
+          [-5, "expense", "09:30", "Electricity bill", "", "Electricity & Water", 6480],
+          [-5, "expense", "18:10", "Bed linen washing", "U1", "Laundry", 1200],
+          [-4, "income", "08:50", "Advance for next week's booking", "U2", "Advance Booking", 3000],
+          [-4, "income", "13:15", "Extra bed – 2 nights", "L2", "Extra Bed", 1000],
+          [-4, "expense", "11:00", "Plumber – bathroom tap", "B1", "Repairs & Maintenance", 1500],
+          [-4, "expense", "17:45", "Rice, dal and cooking oil", "", "Groceries", 2760],
+          [-3, "income", "09:40", "Room rent – 2 nights", "B2", "Room Rent", 6400],
+          [-3, "income", "15:20", "Campfire evening", "B2", "Other Income", 800],
+          [-3, "expense", "10:30", "Cook's salary advance", "", "Staff Salary", 5000],
+          [-2, "income", "10:10", "Room rent – 1 night", "U1", "Room Rent", 2800],
+          [-2, "income", "19:30", "Dinner – 2 guests", "U1", "Food & Drinks", 1100],
+          [-2, "expense", "08:45", "Drinking water cans", "", "Groceries", 360],
+          [-2, "expense", "14:00", "Gardener – weekly visit", "", "Repairs & Maintenance", 1200],
+          [-1, "income", "09:00", "Room rent – 2 nights", "L1", "Room Rent", 7200],
+          [-1, "income", "11:30", "Balance room rent", "U2", "Room Rent", 4200],
+          [-1, "expense", "12:20", "Gas cylinder refill", "", "Gas & Fuel", 1150],
+          [-1, "expense", "16:00", "Towels and bedsheets washing", "L1", "Laundry", 840],
+          [0, "income", "09:20", "Room rent – 1 night", "B1", "Room Rent", 3400],
+          [0, "expense", "08:30", "Milk, bread and eggs", "", "Groceries", 640]
+        ]
+      },
+      "property-2": {
+        startingBalance: 12000,
+        rows: [
+          [-1, "income", "10:00", "Room rent – 1 night", "R1", "Room Rent", 2500],
+          [-1, "expense", "13:00", "Groceries", "", "Groceries", 700],
+          [0, "income", "09:45", "Room rent – 1 night", "R2", "Room Rent", 2200]
+        ]
+      },
+      "property-3": { startingBalance: 0, rows: [] }
+    };
+    const accounts = {};
+    for (const p of PROPERTIES) {
+      const src = plan[p.id];
+      let seq = 0;
+      const transactions = src.rows.map((r, i) => {
+        seq++;
+        const date = addDays(today, r[0]);
+        return { id: p.code + "-demo-" + i, ref: makeRef(p.code, date, seq), date, time: r[2], type: r[1], description: r[3], room: r[4], category: r[5], amount: r[6], notes: "" };
+      });
+      accounts[p.id] = { startingBalance: src.startingBalance, startDate: addDays(today, -6), nextSeq: seq + 1, transactions };
+    }
+    return { version: 1, seededOn: today, accounts };
+  }
+
+  global.CloudRest = { INCOME_CATEGORIES, EXPENSE_CATEGORIES, PROPERTIES, toKey, fromKey, addDays, todayKey, nowTime, round2,
+    formatINR, formatLongDate, formatShortDate, weekday, daySummary, transactionsForDay, parseAmount, validateTransaction, makeRef, buildSampleData };
+})(typeof window !== "undefined" ? window : globalThis);
+</script>
+
+<script type="text/babel" data-presets="react">
+const { useState, useEffect, useMemo, useRef } = React;
+const CR = window.CloudRest;
+
+/* ---------- Data store (stands in for the future REST API) ----------
+   Later: replace load/save with fetch calls, e.g.
+   GET  /api/properties/{id}/transactions?date=YYYY-MM-DD
+   POST /api/properties/{id}/transactions   PUT /api/transactions/{id}   DELETE /api/transactions/{id}
+   GET  /api/properties/{id}/day-summary?date=YYYY-MM-DD  (server computes balances)  */
+const STORE_KEY = "cloudrest.demo.v1";
+const SESSION_KEY = "cloudrest.demo.session";
+const store = {
+  load() { try { const r = localStorage.getItem(STORE_KEY); return r ? JSON.parse(r) : null; } catch (e) { return null; } },
+  save(v) { try { localStorage.setItem(STORE_KEY, JSON.stringify(v)); } catch (e) {} },
+  getSession() { try { return JSON.parse(localStorage.getItem(SESSION_KEY) || "null"); } catch (e) { return null; } },
+  setSession(v) { try { v ? localStorage.setItem(SESSION_KEY, JSON.stringify(v)) : localStorage.removeItem(SESSION_KEY); } catch (e) {} }
+};
+
+function useDemoData() {
+  const [data, setData] = useState(() => store.load() || CR.buildSampleData(CR.todayKey()));
+  useEffect(() => { store.save(data); }, [data]);
+  const actions = useMemo(() => ({
+    add(propertyId, code, tx) {
+      setData((d) => {
+        const acc = d.accounts[propertyId];
+        const t = { ...tx, id: code + "-" + Date.now(), ref: CR.makeRef(code, tx.date, acc.nextSeq) };
+        return { ...d, accounts: { ...d.accounts, [propertyId]: { ...acc, nextSeq: acc.nextSeq + 1, transactions: [...acc.transactions, t] } } };
+      });
+    },
+    update(propertyId, tx) {
+      setData((d) => { const acc = d.accounts[propertyId];
+        return { ...d, accounts: { ...d.accounts, [propertyId]: { ...acc, transactions: acc.transactions.map((t) => t.id === tx.id ? tx : t) } } }; });
+    },
+    remove(propertyId, id) {
+      setData((d) => { const acc = d.accounts[propertyId];
+        return { ...d, accounts: { ...d.accounts, [propertyId]: { ...acc, transactions: acc.transactions.filter((t) => t.id !== id) } } }; });
+    },
+    reset() { setData(CR.buildSampleData(CR.todayKey())); }
+  }), []);
+  return [data, actions];
+}
+
+/* ---------- Icons ---------- */
+const Svg = ({ children, ...p }) => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" {...p}>{children}</svg>;
+const I = {
+  Logo: () => <Svg><path d="M6.5 19a4.5 4.5 0 0 1-.9-8.9A6 6 0 0 1 17.3 8.6 4.5 4.5 0 0 1 17.5 19Z" /><path d="M9 19v-4l3-2.5 3 2.5v4" /></Svg>,
+  Home: () => <Svg><path d="M3 10.5 12 3l9 7.5" /><path d="M5 9.5V21h14V9.5" /><path d="M10 21v-6h4v6" /></Svg>,
+  In: () => <Svg><path d="M17 7 7 17" /><path d="M17 17H7V7" /></Svg>,
+  Out: () => <Svg><path d="M7 17 17 7" /><path d="M7 7h10v10" /></Svg>,
+  Plus: () => <Svg><path d="M12 5v14M5 12h14" /></Svg>,
+  Left: () => <Svg><path d="m15 18-6-6 6-6" /></Svg>,
+  Right: () => <Svg><path d="m9 18 6-6-6-6" /></Svg>,
+  Search: () => <Svg><circle cx="11" cy="11" r="7" /><path d="m20 20-3.5-3.5" /></Svg>,
+  Edit: () => <Svg><path d="M12 20h9" /><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z" /></Svg>,
+  Trash: () => <Svg><path d="M3 6h18" /><path d="M8 6V4h8v2" /><path d="M19 6l-1 14H6L5 6" /></Svg>,
+  Eye: () => <Svg><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z" /><circle cx="12" cy="12" r="3" /></Svg>,
+  EyeOff: () => <Svg><path d="M3 3l18 18" /><path d="M10.6 5.1A10 10 0 0 1 12 5c6.5 0 10 7 10 7a17 17 0 0 1-3 3.9M6.6 6.6C3.8 8.4 2 12 2 12s3.5 7 10 7a9.7 9.7 0 0 0 5.4-1.6" /><path d="M9.9 9.9a3 3 0 0 0 4.2 4.2" /></Svg>,
+  Logout: () => <Svg><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" /><path d="m16 17 5-5-5-5" /><path d="M21 12H9" /></Svg>,
+  Wallet: () => <Svg><path d="M20 7H5a2 2 0 0 1 0-4h13v4" /><path d="M3 5v14a2 2 0 0 0 2 2h15V7" /><circle cx="16" cy="14" r="1.2" /></Svg>,
+  Scale: () => <Svg><path d="M12 3v18M5 21h14" /><path d="m5 8-3 6a3 3 0 0 0 6 0Z" /><path d="m19 8-3 6a3 3 0 0 0 6 0Z" /><path d="M5 8h14" /></Svg>,
+  Check: () => <Svg><circle cx="12" cy="12" r="9" /><path d="m8 12 3 3 5-6" /></Svg>,
+  Alert: () => <Svg><circle cx="12" cy="12" r="9" /><path d="M12 8v5M12 16.5v.01" /></Svg>,
+  Close: () => <Svg><path d="M18 6 6 18M6 6l12 12" /></Svg>,
+  Cal: () => <Svg><rect x="3" y="5" width="18" height="16" rx="2" /><path d="M16 3v4M8 3v4M3 10h18" /></Svg>,
+  Inbox: () => <Svg><path d="M22 12h-6l-2 3h-4l-2-3H2" /><path d="M5.5 5h13L22 12v6a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2v-6Z" /></Svg>
+};
+
+/* ---------- Small shared pieces ---------- */
+function TypePill({ type }) {
+  return type === "income"
+    ? <span className="type-pill in"><I.In />Income</span>
+    : <span className="type-pill out"><I.Out />Expense</span>;
+}
+function Room({ room }) { return room ? <span className="room" title={"Room " + room}>{room}</span> : <span className="no-room">No room</span>; }
+function Amount({ type, amount }) {
+  return type === "income"
+    ? <span className="amt-in num"><span className="sr-only">Income </span>+ {CR.formatINR(amount)}</span>
+    : <span className="amt-out num"><span className="sr-only">Expense </span>− {CR.formatINR(amount)}</span>;
+}
+
+function Modal({ titleId, onClose, children, label }) {
+  const ref = useRef(null);
+  useEffect(() => {
+    const prev = document.activeElement;
+    const onKey = (e) => { if (e.key === "Escape") onClose(); };
+    document.addEventListener("keydown", onKey);
+    const first = ref.current && ref.current.querySelector("[data-autofocus], input, select, textarea, button");
+    first && first.focus();
+    document.body.style.overflow = "hidden";
+    return () => { document.removeEventListener("keydown", onKey); document.body.style.overflow = ""; prev && prev.focus && prev.focus(); };
+  }, []);
+  return (
+    <div className="overlay" onMouseDown={(e) => { if (e.target === e.currentTarget) onClose(); }}>
+      <div className="modal" role="dialog" aria-modal="true" aria-labelledby={titleId} aria-label={label} ref={ref}>{children}</div>
+    </div>
+  );
+}
+
+function Toast({ toast }) {
+  return (
+    <div className="toast-zone" aria-live="polite">
+      {toast && <div className="toast" key={toast.id}>{toast.kind === "warn" ? <I.Alert /> : <I.Check />}<span>{toast.msg}</span></div>}
+    </div>
+  );
+}
+
+function TopBar({ onHome, onLogout, children }) {
+  return (
+    <>
+      <header className="topbar">
+        <div className="wrap topbar-in">
+          <button className="btn btn-ghost" onClick={onHome} style={{ padding: "0 6px" }} aria-label="Cloud Rest Accounts – all properties">
+            <span className="brand"><span className="brand-mark"><I.Logo /></span><span className="hide-sm">Cloud Rest Accounts</span></span>
+          </button>
+          {children}
+          <span className="spacer" />
+          <span className="demo-pill">Demo</span>
+          <button className="btn btn-ghost" onClick={onLogout}><I.Logout /><span className="hide-sm">Log out</span></button>
+        </div>
+      </header>
+    </>
+  );
+}
+
+/* ---------- Page 1: Login ---------- */
+function LoginScreen({ onLogin }) {
+  const [user, setUser] = useState("owner@cloudrest.demo");
+  const [pw, setPw] = useState("demo1234");
+  const [show, setShow] = useState(false);
+  const [errors, setErrors] = useState({});
+  const submit = (e) => {
+    e.preventDefault();
+    const er = {};
+    if (!user.trim()) er.user = "Enter your email or username.";
+    if (!pw) er.pw = "Enter your password.";
+    setErrors(er);
+    if (Object.keys(er).length === 0) onLogin(user.trim());
+  };
+  return (
+    <main className="login-page">
+      <form className="login-card" onSubmit={submit} noValidate>
+        <div className="login-head">
+          <span className="brand-mark"><I.Logo /></span>
+          <h1>Cloud Rest Accounts</h1>
+          <p>Daily income, expenses and balances for each of our properties.</p>
+        </div>
+        <div className="demo-note" role="note">
+          <b>Demo login</b>
+          <span>This is a preview. Any email and password will open the app. Nothing is checked or sent anywhere, and there is no real sign-in yet.</span>
+        </div>
+        <div className={"field" + (errors.user ? " has-error" : "")}>
+          <label htmlFor="login-user">Email or username</label>
+          <input id="login-user" className="input" autoComplete="username" value={user} onChange={(e) => setUser(e.target.value)} aria-invalid={!!errors.user} aria-describedby={errors.user ? "login-user-err" : undefined} />
+          {errors.user && <span className="err" id="login-user-err"><I.Alert width="16" height="16" />{errors.user}</span>}
+        </div>
+        <div className={"field" + (errors.pw ? " has-error" : "")}>
+          <label htmlFor="login-pw">Password</label>
+          <div className="pw-box">
+            <input id="login-pw" className="input" type={show ? "text" : "password"} autoComplete="current-password" value={pw} onChange={(e) => setPw(e.target.value)} aria-invalid={!!errors.pw} />
+            <button type="button" className="icon-btn" onClick={() => setShow((s) => !s)} aria-label={show ? "Hide password" : "Show password"} aria-pressed={show}>{show ? <I.EyeOff /> : <I.Eye />}</button>
+          </div>
+          {errors.pw && <span className="err"><I.Alert width="16" height="16" />{errors.pw}</span>}
+        </div>
+        <button type="submit" className="btn btn-primary" style={{ minHeight: 50, fontSize: 16 }}>Log in</button>
+      </form>
+    </main>
+  );
+}
+
+/* ---------- Page 2: Property selection ---------- */
+function PropertiesScreen({ data, user, onOpen, onLogout }) {
+  const today = CR.todayKey();
+  return (
+    <div>
+      <TopBar onHome={() => {}} onLogout={onLogout} />
+      <main className="wrap">
+        <div className="page-head">
+          <h1>Choose a property</h1>
+          <p>Each property keeps its own separate accounts. Logged in as {user}.</p>
+        </div>
+        <div className="prop-grid">
+          {CR.PROPERTIES.map((p) => {
+            const s = CR.daySummary(data.accounts[p.id], today);
+            return (
+              <article key={p.id} className={"prop-card" + (p.featured ? " featured" : "")}>
+                <div className="prop-top">
+                  <span className="prop-icon"><I.Home /></span>
+                  <div style={{ minWidth: 0 }}>
+                    <h2>{p.name}</h2>
+                    <span className="tag">{p.rooms.length} rooms</span>
+                  </div>
+                </div>
+                <p>{p.description}</p>
+                <div className="prop-stat"><span>Today's closing balance</span><b className="num">{CR.formatINR(s.closing)}</b></div>
+                <button className="btn btn-primary" onClick={() => onOpen(p.id)}>View Accounts <I.Right /></button>
+              </article>
+            );
+          })}
+        </div>
+        <p className="foot-note">All figures are demonstration data. Changes are saved only in this browser on this device.</p>
+      </main>
+    </div>
+  );
+}
+
+/* ---------- Transaction form (add + edit) ---------- */
+function TransactionForm({ type, property, initial, defaultDate, onCancel, onSave }) {
+  const isIncome = type === "income";
+  const today = CR.todayKey();
+  const [f, setF] = useState(() => initial
+    ? { date: initial.date, description: initial.description, room: initial.room || "", category: initial.category, amount: String(initial.amount), notes: initial.notes || "" }
+    : { date: defaultDate, description: "", room: "", category: "", amount: "", notes: "" });
+  const [errors, setErrors] = useState({});
+  const [tried, setTried] = useState(false);
+  const set = (k, v) => { const n = { ...f, [k]: v }; setF(n); if (tried) setErrors(CR.validateTransaction(n, type, today)); };
+  const cats = isIncome ? CR.INCOME_CATEGORIES : CR.EXPENSE_CATEGORIES;
+  const titleId = "tx-form-title";
+  const submit = (e) => {
+    e.preventDefault();
+    setTried(true);
+    const er = CR.validateTransaction(f, type, today);
+    setErrors(er);
+    if (Object.keys(er).length) {
+      const first = e.currentTarget.querySelector('[aria-invalid="true"]');
+      first && first.focus();
+      return;
+    }
+    onSave({ date: f.date, description: f.description.trim(), room: f.room, category: f.category, amount: CR.parseAmount(f.amount), notes: f.notes.trim() });
+  };
+  const Err = ({ k }) => errors[k] ? <span className="err" id={"err-" + k}><I.Alert width="16" height="16" />{errors[k]}</span> : null;
+  const cls = (k) => "field" + (errors[k] ? " has-error" : "");
+  return (
+    <Modal titleId={titleId} onClose={onCancel}>
+      <form onSubmit={submit} noValidate>
+        <div className="modal-head">
+          <span className={"m-icon " + (isIncome ? "in" : "out")}>{isIncome ? <I.In /> : <I.Out />}</span>
+          <h2 id={titleId}>{initial ? "Edit " : "Add "}{isIncome ? "income" : "expense"}</h2>
+          <button type="button" className="icon-btn" onClick={onCancel} aria-label="Close"><I.Close /></button>
+        </div>
+        <div className="modal-body">
+          <div className="two">
+            <div className={cls("date")}>
+              <label htmlFor="tx-date">Date</label>
+              <input id="tx-date" type="date" className="input" max={today} value={f.date} onChange={(e) => set("date", e.target.value)} aria-invalid={!!errors.date} />
+              <Err k="date" />
+            </div>
+            <div className={cls("amount")}>
+              <label htmlFor="tx-amount">Amount</label>
+              <div className="amount-box"><span>₹</span><input id="tx-amount" inputMode="decimal" autoComplete="off" placeholder="0" value={f.amount} onChange={(e) => set("amount", e.target.value)} aria-invalid={!!errors.amount} data-autofocus /></div>
+              <Err k="amount" />
+            </div>
+          </div>
+          <div className={cls("description")}>
+            <label htmlFor="tx-desc">Description</label>
+            <input id="tx-desc" className="input" placeholder={isIncome ? "e.g. Room rent – 2 nights" : "e.g. Vegetables and milk"} value={f.description} onChange={(e) => set("description", e.target.value)} aria-invalid={!!errors.description} />
+            <Err k="description" />
+          </div>
+          <div className={cls("room")} role="group" aria-labelledby="tx-room-label">
+            <span className="label" id="tx-room-label">Room number {!isIncome && <span className="hint">(optional – only if this cost is for one room)</span>}</span>
+            <div className="room-picker">
+              {!isIncome && <button type="button" aria-pressed={f.room === ""} onClick={() => set("room", "")}>None</button>}
+              {property.rooms.map((r) => <button type="button" key={r} aria-pressed={f.room === r} aria-invalid={!!errors.room} onClick={() => set("room", f.room === r && !isIncome ? "" : r)}>{r}</button>)}
+            </div>
+            <Err k="room" />
+          </div>
+          <div className={cls("category")}>
+            <label htmlFor="tx-cat">{isIncome ? "Income type" : "Expense type"}</label>
+            <select id="tx-cat" className="select" value={f.category} onChange={(e) => set("category", e.target.value)} aria-invalid={!!errors.category}>
+              <option value="">Choose one…</option>
+              {cats.map((c) => <option key={c} value={c}>{c}</option>)}
+            </select>
+            <Err k="category" />
+          </div>
+          <div className={cls("notes")}>
+            <label htmlFor="tx-notes">Notes <span className="hint">(optional)</span></label>
+            <textarea id="tx-notes" className="textarea" placeholder="Anything you want to remember" value={f.notes} onChange={(e) => set("notes", e.target.value)} />
+            <Err k="notes" />
+          </div>
+        </div>
+        <div className="modal-foot">
+          <button type="button" className="btn" onClick={onCancel}>Cancel</button>
+          <button type="submit" className={"btn " + (isIncome ? "btn-income" : "btn-expense")}>{initial ? "Save changes" : (isIncome ? "Save income" : "Save expense")}</button>
+        </div>
+      </form>
+    </Modal>
+  );
+}
+
+function ConfirmDelete({ tx, onCancel, onConfirm }) {
+  return (
+    <Modal titleId="del-title" onClose={onCancel}>
+      <div className="modal-head"><h2 id="del-title">Delete this entry?</h2></div>
+      <div className="modal-body">
+        <div className="confirm-box">
+          <span style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}><TypePill type={tx.type} /><b>{tx.description}</b></span>
+          <span className="num"><Amount type={tx.type} amount={tx.amount} /> · {CR.formatShortDate(tx.date)}{tx.room ? " · Room " + tx.room : ""}</span>
+        </div>
+        <p style={{ margin: 0 }}>The day's totals and the balances for this day and every later day will be updated. This cannot be undone.</p>
+      </div>
+      <div className="modal-foot">
+        <button className="btn" onClick={onCancel} data-autofocus>Keep it</button>
+        <button className="btn btn-danger" onClick={onConfirm}><I.Trash />Delete entry</button>
+      </div>
+    </Modal>
+  );
+}
+
+function ConfirmReset({ onCancel, onConfirm }) {
+  return (
+    <Modal titleId="reset-title" onClose={onCancel}>
+      <div className="modal-head"><h2 id="reset-title">Reset demo data?</h2></div>
+      <div className="modal-body"><p style={{ margin: 0 }}>All entries you added, changed or deleted in this browser will be replaced with the original sample data for every property.</p></div>
+      <div className="modal-foot">
+        <button className="btn" onClick={onCancel} data-autofocus>Cancel</button>
+        <button className="btn btn-danger" onClick={onConfirm}>Reset demo data</button>
+      </div>
+    </Modal>
+  );
+}
+
+/* ---------- Page 3: Accounts dashboard ---------- */
+function SummaryCards({ s, prevDate }) {
+  return (
+    <section aria-label="Day summary">
+      <div className="summary">
+        <div className="sum-card">
+          <span className="sum-label"><I.Wallet />Opening Balance</span>
+          <span className="sum-value num">{CR.formatINR(s.opening)}</span>
+          <span className="sum-sub">Carried from {CR.formatShortDate(prevDate)} closing</span>
+        </div>
+        <div className="sum-card income">
+          <span className="sum-label"><I.In />Total Income</span>
+          <span className="sum-value num">+ {CR.formatINR(s.income)}</span>
+          <span className="sum-sub">Money that came in</span>
+        </div>
+        <div className="sum-card expense">
+          <span className="sum-label"><I.Out />Total Expenses</span>
+          <span className="sum-value num">− {CR.formatINR(s.expense)}</span>
+          <span className="sum-sub">Money that went out</span>
+        </div>
+        <div className="sum-card closing">
+          <span className="sum-label"><I.Scale />Closing Balance</span>
+          <span className="sum-value num">{CR.formatINR(s.closing)}</span>
+          <span className="sum-sub">Becomes the next day's opening balance</span>
+        </div>
+      </div>
+      <p className="formula num">Closing balance = {CR.formatINR(s.opening)} opening + {CR.formatINR(s.income)} income − {CR.formatINR(s.expense)} expenses</p>
+    </section>
+  );
+}
+
+function DayStrip({ account, selected, today, onPick }) {
+  let end = CR.addDays(selected, 3);
+  if (end > today) end = today;
+  const days = [];
+  for (let i = 6; i >= 0; i--) days.push(CR.addDays(end, -i));
+  return (
+    <nav className="days" aria-label="Recent days">
+      <h2>Previous days</h2>
+      <div className="day-strip">
+        {days.map((d) => {
+          const s = CR.daySummary(account, d);
+          return (
+            <button key={d} className="day-chip" aria-current={d === selected ? "date" : undefined} onClick={() => onPick(d)}>
+              <span className="d1">{d === today ? "Today" : CR.weekday(d)}</span>
+              <span className="d2">{CR.formatShortDate(d)}</span>
+              <span className="d3 num">{s.count ? CR.formatINR(s.closing) : "No entries"}</span>
+            </button>
+          );
+        })}
+      </div>
+    </nav>
+  );
+}
+
+function AccountsScreen({ property, account, actions, onBack, onLogout, onReset, notify }) {
+  const today = CR.todayKey();
+  const [date, setDate] = useState(today);
+  const [query, setQuery] = useState("");
+  const [typeFilter, setTypeFilter] = useState("all");
+  const [roomFilter, setRoomFilter] = useState("all");
+  const [form, setForm] = useState(null);     // { type, initial? }
+  const [toDelete, setToDelete] = useState(null);
+
+  const summary = CR.daySummary(account, date);
+  const dayTx = CR.transactionsForDay(account, date);
+  const q = query.trim().toLowerCase();
+  const shown = dayTx.filter((t) =>
+    (typeFilter === "all" || t.type === typeFilter) &&
+    (roomFilter === "all" || (roomFilter === "none" ? !t.room : t.room === roomFilter)) &&
+    (!q || [t.description, t.category, t.room, t.ref, t.notes].join(" ").toLowerCase().includes(q)));
+  const filtered = typeFilter !== "all" || roomFilter !== "all" || !!q;
+  const clearFilters = () => { setQuery(""); setTypeFilter("all"); setRoomFilter("all"); };
+  const shownIn = shown.filter((t) => t.type === "income").reduce((a, t) => a + t.amount, 0);
+  const shownOut = shown.filter((t) => t.type === "expense").reduce((a, t) => a + t.amount, 0);
+
+  const lastWithEntries = useMemo(() => {
+    const ds = account.transactions.map((t) => t.date).filter((d) => d < date).sort();
+    return ds.length ? ds[ds.length - 1] : null;
+  }, [account, date]);
+
+  const goDate = (d) => { if (!d) return; setDate(d > today ? today : d); };
+  const isToday = date === today;
+
+  const save = (values) => {
+    if (form.initial) {
+      actions.update(property.id, { ...form.initial, ...values });
+      notify("Changes saved. Balances updated.");
+    } else {
+      actions.add(property.id, property.code, { ...values, type: form.type, time: values.date === today ? CR.nowTime() : "" });
+      notify((form.type === "income" ? "Income" : "Expense") + " of " + CR.formatINR(values.amount) + " saved for " + CR.formatShortDate(values.date) + ".");
+    }
+    if (values.date !== date) setDate(values.date);
+    setForm(null);
+  };
+  const confirmDelete = () => {
+    actions.remove(property.id, toDelete.id);
+    notify("Entry deleted. Balances updated.", "warn");
+    setToDelete(null);
+  };
+
+  const RowActions = ({ t, big }) => big ? (
+    <div className="t-card-actions">
+      <button className="btn" onClick={() => setForm({ type: t.type, initial: t })}><I.Edit />Edit</button>
+      <button className="btn" onClick={() => setToDelete(t)}><I.Trash />Delete</button>
+    </div>
+  ) : (
+    <div className="row-actions">
+      <button className="icon-btn" title="Edit" aria-label={"Edit " + t.description} onClick={() => setForm({ type: t.type, initial: t })}><I.Edit /></button>
+      <button className="icon-btn" title="Delete" aria-label={"Delete " + t.description} onClick={() => setToDelete(t)}><I.Trash /></button>
+    </div>
+  );
+
+  return (
+    <div className="app-accounts">
+      <TopBar onHome={onBack} onLogout={onLogout} />
+      <div className="demo-banner"><div className="wrap"><span><strong>Demonstration data.</strong> Sample figures only. Changes are saved in this browser on this device.</span><button className="link-btn" onClick={onReset}>Reset demo data</button></div></div>
+
+      <main className="wrap">
+        <div className="acc-head">
+          <div className="acc-title">
+            <span className="crumb"><button className="link-btn" onClick={onBack}>All properties</button> / Accounts</span>
+            <h1>{property.name}</h1>
+          </div>
+          <div className="desk-actions">
+            <button className="btn btn-income" onClick={() => setForm({ type: "income" })}><I.Plus />Add Income</button>
+            <button className="btn btn-expense" onClick={() => setForm({ type: "expense" })}><I.Plus />Add Expense</button>
+          </div>
+        </div>
+
+        <section className="datebar" aria-label="Choose a date">
+          <div className="date-now">
+            <span className="label">Viewing</span>
+            <span className="big">{CR.formatLongDate(date)} {isToday ? <span className="badge-today">Today</span> : <span className="badge-past">Past day</span>}</span>
+          </div>
+          <div className="date-ctrls">
+            <button className="btn" onClick={() => goDate(CR.addDays(date, -1))} aria-label="Previous day"><I.Left /><span className="hide-sm">Previous day</span></button>
+            <label className="sr-only" htmlFor="date-pick">Pick a date</label>
+            <input id="date-pick" type="date" className="input" value={date} max={today} onChange={(e) => goDate(e.target.value)} />
+            <button className="btn" onClick={() => goDate(CR.addDays(date, 1))} disabled={isToday} aria-label="Next day"><span className="hide-sm">Next day</span><I.Right /></button>
+            <button className="btn" onClick={() => goDate(today)} disabled={isToday}>Today</button>
+          </div>
+        </section>
+
+        <SummaryCards s={summary} prevDate={CR.addDays(date, -1)} />
+        <DayStrip account={account} selected={date} today={today} onPick={goDate} />
+
+        <section className="panel" aria-labelledby="entries-title">
+          <div className="panel-head">
+            <div className="panel-title">
+              <h2 id="entries-title">Entries for {CR.formatShortDate(date)}</h2>
+              <span>{dayTx.filter((t) => t.type === "income").length} income · {dayTx.filter((t) => t.type === "expense").length} expense</span>
+            </div>
+            {dayTx.length > 0 && (
+              <div className="filters">
+                <div className="search">
+                  <I.Search />
+                  <label className="sr-only" htmlFor="tx-search">Search entries</label>
+                  <input id="tx-search" className="input" type="search" placeholder="Search description, room or type" value={query} onChange={(e) => setQuery(e.target.value)} />
+                </div>
+                <div className="seg" role="group" aria-label="Show">
+                  {[["all", "All"], ["income", "Income"], ["expense", "Expense"]].map(([v, l]) =>
+                    <button key={v} aria-pressed={typeFilter === v} onClick={() => setTypeFilter(v)}>{l}</button>)}
+                </div>
+                <div>
+                  <label className="sr-only" htmlFor="room-filter">Room</label>
+                  <select id="room-filter" className="select" value={roomFilter} onChange={(e) => setRoomFilter(e.target.value)}>
+                    <option value="all">All rooms</option>
+                    {property.rooms.map((r) => <option key={r} value={r}>Room {r}</option>)}
+                    <option value="none">No room</option>
+                  </select>
+                </div>
+              </div>
+            )}
+            {filtered && dayTx.length > 0 && (
+              <div className="filter-note"><span>Showing {shown.length} of {dayTx.length} entries. The balance cards above always show the full day.</span><button className="link-btn" onClick={clearFilters}>Clear filters</button></div>
+            )}
+          </div>
+
+          {dayTx.length === 0 ? (
+            <div className="empty">
+              <span className="e-icon"><I.Inbox /></span>
+              <h3>No entries for this day</h3>
+              <p>Nothing has been added for {CR.formatLongDate(date)}. Use <b>Add Income</b> or <b>Add Expense</b> to record money for this day.</p>
+              {lastWithEntries && <button className="btn" onClick={() => setDate(lastWithEntries)}><I.Cal />Go to {CR.formatShortDate(lastWithEntries)}, the last day with entries</button>}
+            </div>
+          ) : shown.length === 0 ? (
+            <div className="empty">
+              <span className="e-icon"><I.Search /></span>
+              <h3>No entries match</h3>
+              <p>Try a different word, or show all rooms and types.</p>
+              <button className="btn" onClick={clearFilters}>Clear filters</button>
+            </div>
+          ) : (
+            <>
+              <div className="table-wrap">
+                <table>
+                  <thead>
+                    <tr><th>Time / Ref</th><th>Description</th><th>Room</th><th>Category</th><th className="amt">Income</th><th className="amt">Expense</th><th className="amt">Actions</th></tr>
+                  </thead>
+                  <tbody>
+                    {shown.map((t) => (
+                      <tr key={t.id}>
+                        <td><div className="t-time num">{t.time || "—"}</div><div className="t-ref num">{t.ref}</div></td>
+                        <td style={{ minWidth: 200 }}><div className="t-desc">{t.description}</div>{t.notes && <div className="t-notes">{t.notes}</div>}</td>
+                        <td><Room room={t.room} /></td>
+                        <td>{t.category}</td>
+                        <td className="amt">{t.type === "income" ? <Amount type="income" amount={t.amount} /> : <span className="amt-empty" aria-label="none">—</span>}</td>
+                        <td className="amt">{t.type === "expense" ? <Amount type="expense" amount={t.amount} /> : <span className="amt-empty" aria-label="none">—</span>}</td>
+                        <td><RowActions t={t} /></td>
+                      </tr>
+                    ))}
+                  </tbody>
+                  <tfoot>
+                    <tr><td colSpan="4">{filtered ? "Total of shown entries" : "Day total"}</td><td className="amt num amt-in">+ {CR.formatINR(shownIn)}</td><td className="amt num amt-out">− {CR.formatINR(shownOut)}</td><td></td></tr>
+                  </tfoot>
+                </table>
+              </div>
+              <div className="cards">
+                {shown.map((t) => (
+                  <article className="t-card" key={t.id}>
+                    <div className="t-card-top">
+                      <div style={{ minWidth: 0 }}>
+                        <div className="t-desc">{t.description}</div>
+                        {t.notes && <div className="t-notes">{t.notes}</div>}
+                      </div>
+                      <div className="t-card-amt"><Amount type={t.type} amount={t.amount} /></div>
+                    </div>
+                    <div className="t-card-meta">
+                      <TypePill type={t.type} /><Room room={t.room} /><span>{t.category}</span><span className="num">· {t.time || "No time"} · {t.ref}</span>
+                    </div>
+                    <RowActions t={t} big />
+                  </article>
+                ))}
+                <div className="cards-total num"><span>{filtered ? "Shown" : "Day total"}</span><span><span className="amt-in">+ {CR.formatINR(shownIn)}</span> · <span className="amt-out">− {CR.formatINR(shownOut)}</span></span></div>
+              </div>
+            </>
+          )}
+        </section>
+        <p className="foot-note">Prototype only: there is no real sign-in, server or database. Figures are sample data stored in this browser.</p>
+      </main>
+
+      <div className="mobile-bar">
+        <button className="btn btn-income" onClick={() => setForm({ type: "income" })}><I.Plus />Add Income</button>
+        <button className="btn btn-expense" onClick={() => setForm({ type: "expense" })}><I.Plus />Add Expense</button>
+      </div>
+
+      {form && <TransactionForm type={form.type} initial={form.initial} property={property} defaultDate={date} onCancel={() => setForm(null)} onSave={save} />}
+      {toDelete && <ConfirmDelete tx={toDelete} onCancel={() => setToDelete(null)} onConfirm={confirmDelete} />}
+    </div>
+  );
+}
+
+/* ---------- App shell ---------- */
+function App() {
+  const [data, actions] = useDemoData();
+  const [session, setSession] = useState(() => store.getSession());
+  const [propertyId, setPropertyId] = useState(() => (store.getSession() || {}).propertyId || null);
+  const [toast, setToast] = useState(null);
+  const [resetOpen, setResetOpen] = useState(false);
+  const timer = useRef(null);
+
+  useEffect(() => { store.setSession(session ? { ...session, propertyId } : null); }, [session, propertyId]);
+  useEffect(() => { window.scrollTo(0, 0); }, [propertyId, !!session]);
+
+  const notify = (msg, kind) => {
+    clearTimeout(timer.current);
+    setToast({ msg, kind, id: Date.now() });
+    timer.current = setTimeout(() => setToast(null), 3200);
+  };
+  const logout = () => { setSession(null); setPropertyId(null); };
+
+  let screen;
+  if (!session) screen = <LoginScreen onLogin={(user) => setSession({ user })} />;
+  else if (!propertyId || !data.accounts[propertyId]) screen = <PropertiesScreen data={data} user={session.user} onOpen={setPropertyId} onLogout={logout} />;
+  else {
+    const property = CR.PROPERTIES.find((p) => p.id === propertyId);
+    screen = <AccountsScreen key={propertyId} property={property} account={data.accounts[propertyId]} actions={actions}
+      onBack={() => setPropertyId(null)} onLogout={logout} onReset={() => setResetOpen(true)} notify={notify} />;
+  }
+  return (
+    <>
+      {screen}
+      {resetOpen && <ConfirmReset onCancel={() => setResetOpen(false)} onConfirm={() => { actions.reset(); setResetOpen(false); notify("Demo data reset to the original sample."); }} />}
+      <Toast toast={toast} />
+    </>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+</script>
+
+</body>
+</html>
